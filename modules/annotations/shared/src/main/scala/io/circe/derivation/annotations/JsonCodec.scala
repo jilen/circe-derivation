@@ -47,6 +47,14 @@ private[derivation] final class GenericJsonCodecMacros(val c: blackbox.Context) 
          ${codec(clsDef)}
        }
        """
+    case List(q"case object $objName extends { ..$objEarlyDefs } with ..$objParents { $objSelf => ..$objDefs }") =>
+      q"""
+       case object $objName extends { ..$objEarlyDefs } with ..$objParents { $objSelf =>
+      ..$objDefs
+       ${caseObjectCodec(objName)}
+      }
+      """
+
     case _ => c.abort(c.enclosingPosition, "Invalid annotation target: must be a case class or a sealed trait/class")
   }
 
@@ -111,6 +119,29 @@ private[derivation] final class GenericJsonCodecMacros(val c: blackbox.Context) 
     q"$config.useDefaults"
   private[this] val cfgDiscriminator =
     q"$config.discriminator"
+
+  private[this] def caseObjectCodec(objName: TermName) = {
+    val decoderName = TermName("decode" + objName)
+    val encoderName = TermName("encode" + objName)
+    val codecName = TermName("codecFor" + objName)
+    val (decoder, encoder, codec) = {
+      (
+        q"""implicit val $decoderName: $DecoderClass[$objName.type] =
+            _root_.io.circe.derivation.caseObjectDecoder[$objName.type]($objName)""",
+        q"""implicit val $encoderName: $AsObjectEncoderClass[$objName.type] =
+            _root_.io.circe.derivation.caseObjectEncoder[$objName.type]""",
+        q"""implicit val $codecName: $AsObjectCodecClass[$objName.type] =
+            _root_.io.circe.derivation.caseObjectCodec[$objName.type]($objName)"""
+      )
+    }
+    codecType match {
+      case JsonCodecType.Both               => codec
+      case JsonCodecType.SnakeCaseJsonCodec => codec
+      case JsonCodecType.KebabCaseJsonCodec => codec
+      case JsonCodecType.DecodeOnly         => decoder
+      case JsonCodecType.EncodeOnly         => encoder
+    }
+  }
 
   private[this] def codec(clsDef: ClassDef): Tree = {
     val tpname = clsDef.name
