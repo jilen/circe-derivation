@@ -269,50 +269,6 @@ lazy val noPublishSettings = Seq(
 )
 
 lazy val publishSettings = Seq(
-  releaseCrossBuild := true,
-  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-  releaseVcsSign := true,
-  homepage := Some(url("https://github.com/circe/circe-derivation")),
-  licenses := Seq("Apache 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
-  publishMavenStyle := true,
-  publishArtifact in Test := false,
-  pomIncludeRepository := { _ => false },
-  publishTo := {
-    val nexus = "https://oss.sonatype.org/"
-    if (isSnapshot.value)
-      Some("snapshots".at(nexus + "content/repositories/snapshots"))
-    else
-      Some("releases".at(nexus + "service/local/staging/deploy/maven2"))
-  },
-  autoAPIMappings := true,
-  apiURL := Some(url("https://circe.github.io/circe-derivation/api/")),
-  scmInfo := Some(
-    ScmInfo(
-      url("https://github.com/circe/circe-derivation"),
-      "scm:git:git@github.com:circe/circe-derivation.git"
-    )
-  ),
-  developers := List(
-    Developer(
-      "travisbrown",
-      "Travis Brown",
-      "travisrobertbrown@gmail.com",
-      url("https://twitter.com/travisbrown")
-    )
-  ),
-  pomPostProcess := { (node: XmlNode) =>
-    new RuleTransformer(
-      new RewriteRule {
-        private def isTestScope(elem: Elem): Boolean =
-          elem.label == "dependency" && elem.child.exists(child => child.label == "scope" && child.text == "test")
-
-        override def transform(node: XmlNode): XmlNodeSeq = node match {
-          case elem: Elem if isTestScope(elem) => Nil
-          case _                               => node
-        }
-      }
-    ).transform(node).head
-  }
 )
 
 credentials ++= (

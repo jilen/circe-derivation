@@ -126,20 +126,20 @@ private[derivation] final class GenericJsonCodecMacros(val c: blackbox.Context) 
     val codecName = TermName("codecFor" + objName)
     val (decoder, encoder, codec) = {
       (
-        q"""implicit val $decoderName: $DecoderClass[$objName.type] =
+        () => q"""implicit val $decoderName: $DecoderClass[$objName.type] =
             _root_.io.circe.derivation.caseObjectDecoder[$objName.type]($objName)""",
-        q"""implicit val $encoderName: $AsObjectEncoderClass[$objName.type] =
+        () => q"""implicit val $encoderName: $AsObjectEncoderClass[$objName.type] =
             _root_.io.circe.derivation.caseObjectEncoder[$objName.type]""",
-        q"""implicit val $codecName: $AsObjectCodecClass[$objName.type] =
+        () => q"""implicit val $codecName: $AsObjectCodecClass[$objName.type] =
             _root_.io.circe.derivation.caseObjectCodec[$objName.type]($objName)"""
       )
     }
     codecType match {
-      case JsonCodecType.Both               => codec
-      case JsonCodecType.SnakeCaseJsonCodec => codec
-      case JsonCodecType.KebabCaseJsonCodec => codec
-      case JsonCodecType.DecodeOnly         => decoder
-      case JsonCodecType.EncodeOnly         => encoder
+      case JsonCodecType.Both               => codec()
+      case JsonCodecType.SnakeCaseJsonCodec => codec()
+      case JsonCodecType.KebabCaseJsonCodec => codec()
+      case JsonCodecType.DecodeOnly         => decoder()
+      case JsonCodecType.EncodeOnly         => encoder()
     }
   }
 
@@ -153,11 +153,11 @@ private[derivation] final class GenericJsonCodecMacros(val c: blackbox.Context) 
     val (decoder, encoder, codec) = if (tparams.isEmpty) {
       val Type = tpname
       (
-        q"""implicit val $decoderName: $DecoderClass[$Type] =
+        () => q"""implicit val $decoderName: $DecoderClass[$Type] =
             _root_.io.circe.derivation.deriveDecoder[$Type]($transformNames, $cfgUseDefaults, $cfgDiscriminator)""",
-        q"""implicit val $encoderName: $AsObjectEncoderClass[$Type] =
+        () => q"""implicit val $encoderName: $AsObjectEncoderClass[$Type] =
             _root_.io.circe.derivation.deriveEncoder[$Type]($transformNames, $cfgDiscriminator)""",
-        q"""implicit val $codecName: $AsObjectCodecClass[$Type] =
+        () => q"""implicit val $codecName: $AsObjectCodecClass[$Type] =
             _root_.io.circe.derivation.deriveCodec[$Type]($transformNames, $cfgUseDefaults, $cfgDiscriminator)"""
       )
     } else {
@@ -173,22 +173,22 @@ private[derivation] final class GenericJsonCodecMacros(val c: blackbox.Context) 
       val encodeParams = mkImplicitParams("encode", EncoderClass)
       val Type = tq"$tpname[..$tparamNames]"
       (
-        q"""implicit def $decoderName[..$tparams](implicit ..$decodeParams): $DecoderClass[$Type] =
+        () => q"""implicit def $decoderName[..$tparams](implicit ..$decodeParams): $DecoderClass[$Type] =
            _root_.io.circe.derivation.deriveDecoder[$Type]($transformNames, $cfgUseDefaults, $cfgDiscriminator)""",
-        q"""implicit def $encoderName[..$tparams](implicit ..$encodeParams): $AsObjectEncoderClass[$Type] =
+        () => q"""implicit def $encoderName[..$tparams](implicit ..$encodeParams): $AsObjectEncoderClass[$Type] =
            _root_.io.circe.derivation.deriveEncoder[$Type]($transformNames, $cfgDiscriminator)""",
-        q"""implicit def $codecName[..$tparams](implicit
+        () => q"""implicit def $codecName[..$tparams](implicit
             ..${decodeParams ++ encodeParams}
           ): $AsObjectCodecClass[$Type] =
             _root_.io.circe.derivation.deriveCodec[$Type]($transformNames, $cfgUseDefaults, $cfgDiscriminator)"""
       )
     }
     codecType match {
-      case JsonCodecType.Both               => codec
-      case JsonCodecType.SnakeCaseJsonCodec => codec
-      case JsonCodecType.KebabCaseJsonCodec => codec
-      case JsonCodecType.DecodeOnly         => decoder
-      case JsonCodecType.EncodeOnly         => encoder
+      case JsonCodecType.Both               => codec()
+      case JsonCodecType.SnakeCaseJsonCodec => codec()
+      case JsonCodecType.KebabCaseJsonCodec => codec()
+      case JsonCodecType.DecodeOnly         => decoder()
+      case JsonCodecType.EncodeOnly         => encoder()
     }
   }
 }
