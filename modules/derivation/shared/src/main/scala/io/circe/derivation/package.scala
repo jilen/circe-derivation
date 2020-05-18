@@ -37,4 +37,8 @@ package object derivation {
     transformNames: String => String
   ): Codec.AsObject[A] =
     macro DerivationMacros.materializeCodecWithTransformNamesAndDefaults[A]
+
+  final def caseObjectEncoder[A]: Encoder.AsObject[A] = new CaseObjectEncoder[A]
+  final def caseObjectDecoder[A](a: A): Decoder[A] = new CaseObjectDecoder[A](a)
+  final def caseObjectCodec[A](a: A): Codec.AsObject[A] = new CaseObjectCodec[A](a)
 }
