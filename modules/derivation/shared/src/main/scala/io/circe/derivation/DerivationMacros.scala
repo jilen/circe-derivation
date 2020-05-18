@@ -306,6 +306,7 @@ class DerivationMacros(val c: blackbox.Context) extends ScalaVersionCompat {
         discriminator
       )
     } else {
+      abortIfNested(subclasses)
       materializeCodecTraitImpl[T](
         transformNames,
         useDefaults,
@@ -323,9 +324,11 @@ class DerivationMacros(val c: blackbox.Context) extends ScalaVersionCompat {
     val tpe = weakTypeOf[T]
 
     val subclasses = tpe.typeSymbol.asClass.knownDirectSubclasses
+
     if (subclasses.isEmpty) {
       materializeDecoderCaseClassImpl[T](transformNames, useDefaults)
     } else {
+      abortIfNested(subclasses)
       materializeDecoderTraitImpl[T](
         transformNames,
         subclasses,
@@ -670,6 +673,13 @@ class DerivationMacros(val c: blackbox.Context) extends ScalaVersionCompat {
     )
   }
 
+  private def abortIfNested(subclasses: Set[Symbol]) = {
+    val hasNestedTrait = subclasses.exists(_.asClass.isTrait)
+    if(hasNestedTrait) {
+      c.abort(c.enclosingPosition, "Trait inherit is not supported")
+    }
+  }
+
   private[this] def materializeEncoderImpl[T: c.WeakTypeTag](
     transformNames: Option[c.Expr[String => String]],
     discriminator: c.Expr[Option[String]]
@@ -680,6 +690,7 @@ class DerivationMacros(val c: blackbox.Context) extends ScalaVersionCompat {
     if (subclasses.isEmpty) {
       materializeEncoderCaseClassImpl[T](transformNames)
     } else {
+      abortIfNested(subclasses)
       materializeEncoderTraitImpl[T](
         transformNames,
         subclasses,
